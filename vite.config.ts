@@ -26,6 +26,18 @@ export default defineConfig({
         cors: true,
         hmr: { host },
     },
+    build: {
+        rollupOptions: {
+            // Silence noisy /* #__PURE__ */ annotation warnings coming from
+            // third-party deps (e.g. reka-ui's bundled @vueuse/core).
+            onLog(level, log, handler) {
+                if (log.code === 'INVALID_ANNOTATION' && log.id?.includes('node_modules')) {
+                    return;
+                }
+                handler(level, log);
+            },
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
