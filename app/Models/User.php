@@ -15,7 +15,7 @@ use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'password', 'wallet_balance', 'avatar', 'is_online'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'wallet_balance', 'avatar', 'is_online'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -30,7 +30,16 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             'wallet_balance' => 'decimal:2',
             'is_online' => 'boolean',
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Whether this user has the admin role.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 
     public function tables(): BelongsToMany

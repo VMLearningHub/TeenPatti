@@ -169,7 +169,10 @@ class GameService
     {
         if (! $this->rules->validateBet($hand, $player, $amount)) {
             [$low, $high] = $this->rules->legalRange($hand, $player);
-            throw new RuntimeException("Bet must be between {$low} and {$high}.");
+            $mode = $player->is_blind ? 'blind' : 'seen';
+            throw new RuntimeException(
+                "Your chaal must be between ₹{$low} and ₹{$high} while playing {$mode}. You entered ₹{$amount}."
+            );
         }
 
         $user = $player->user;

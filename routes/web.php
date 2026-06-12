@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\WalletController;
@@ -24,7 +25,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Wallet
     Route::get('wallet', [WalletController::class, 'index'])->name('wallet');
-    Route::post('wallet/deposit', [WalletController::class, 'deposit'])->name('wallet.deposit');
+    // Deposit is restricted to admins.
+    Route::post('wallet/deposit', [WalletController::class, 'deposit'])
+        ->middleware('admin')->name('wallet.deposit');
+
+    // Admin-only area
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+        // User module
+        Route::get('users', [AdminController::class, 'users'])->name('users');
+        Route::patch('users/{user}/toggle', [AdminController::class, 'toggleUser'])->name('users.toggle');
+        Route::patch('users/{user}/wallet', [AdminController::class, 'updateWallet'])->name('users.wallet');
+
+        // Tables module
+        Route::get('tables', [AdminController::class, 'tables'])->name('tables');
+        Route::delete('tables/{table:code}', [AdminController::class, 'deleteTable'])->name('tables.delete');
+    });
 });
 
 require __DIR__.'/settings.php';

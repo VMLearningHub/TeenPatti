@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,9 @@ defineProps<{
     wallet: string;
     transactions: Transaction[];
 }>();
+
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 
 const depositForm = useForm({ amount: 500 });
 
@@ -54,10 +58,13 @@ function typeBadge(type: string) {
             </CardHeader>
             <CardContent>
                 <div class="mb-4 text-3xl font-bold">₹{{ wallet }}</div>
-                <form class="flex gap-2" @submit.prevent="deposit">
+                <form v-if="isAdmin" class="flex gap-2" @submit.prevent="deposit">
                     <Input v-model.number="depositForm.amount" type="number" min="1" class="w-32" />
                     <Button type="submit" :disabled="depositForm.processing">Deposit (test)</Button>
                 </form>
+                <p v-else class="text-sm text-muted-foreground">
+                    Deposits are managed by an administrator.
+                </p>
             </CardContent>
         </Card>
 

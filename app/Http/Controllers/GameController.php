@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class GameController extends Controller
 {
@@ -29,7 +30,15 @@ class GameController extends Controller
         ]);
 
         $userId = Auth::id();
-        $hand = $table->currentHand;
+
+        // Use the in-progress hand if there is one, otherwise fall back to the
+        // most recent hand so the completed showdown (winner + revealed cards)
+        // stays visible until a new hand is dealt.
+        $hand = $table->currentHand
+            ?? Hand::with('players')
+                ->where('poker_table_id', $table->id)
+                ->latest('id')
+                ->first();
 
         $myHand = null;
         $myLegalRange = null;
@@ -82,7 +91,11 @@ class GameController extends Controller
 
     public function start(PokerTable $table)
     {
-        $this->game->startHand($table);
+        try {
+            $this->game->startHand($table);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back();
     }
@@ -99,7 +112,11 @@ class GameController extends Controller
             ->where('status', '!=', 'completed')
             ->latest('id')->firstOrFail();
 
-        $this->game->playerAction($hand, Auth::user(), $data['action'], $data);
+        try {
+            $this->game->playerAction($hand, Auth::user(), $data['action'], $data);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back();
     }

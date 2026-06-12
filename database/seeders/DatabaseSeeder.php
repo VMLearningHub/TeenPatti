@@ -13,15 +13,17 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $users = collect([
-            ['name' => 'Aarav', 'email' => 'aarav@example.com'],
-            ['name' => 'Priya', 'email' => 'priya@example.com'],
-            ['name' => 'Vikram', 'email' => 'vikram@example.com'],
-            ['name' => 'Meera', 'email' => 'meera@example.com'],
+            ['name' => 'Aarav', 'email' => 'aarav@example.com', 'role' => 'admin'],
+            ['name' => 'Priya', 'email' => 'priya@example.com', 'role' => 'user'],
+            ['name' => 'Vikram', 'email' => 'vikram@example.com', 'role' => 'user'],
+            ['name' => 'Meera', 'email' => 'meera@example.com', 'role' => 'user'],
         ])->map(fn (array $u) => User::updateOrCreate(
             ['email' => $u['email']],
             [
                 'name' => $u['name'],
                 'password' => Hash::make('password'),
+                'role' => $u['role'],
+                'is_active' => true,
                 'wallet_balance' => 10000,
                 'email_verified_at' => now(),
             ],

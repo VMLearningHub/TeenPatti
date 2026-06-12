@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 defineOptions({
     layout: {
@@ -65,6 +65,39 @@ const props = defineProps<{
 
 const betAmount = ref<number>(Number(props.table.boot_amount));
 
+// Flash error coming back from the server (e.g. invalid chaal amount).
+const page = usePage();
+const actionError = ref<string | null>(null);
+watch(
+    () => (page.props.flash as { error?: string } | undefined)?.error,
+    (msg) => {
+        if (msg) actionError.value = msg;
+    },
+    { immediate: true },
+);
+
+// Keep the bet input within the legal chaal range so it's hard to send a bad value.
+watch(
+    () => props.my_legal_range,
+    (range) => {
+        if (!range) return;
+        const [low, high] = range;
+        if (betAmount.value < low) betAmount.value = low;
+        if (betAmount.value > high) betAmount.value = high;
+    },
+    { immediate: true },
+);
+
+function chaal() {
+    actionError.value = null;
+    const range = props.my_legal_range;
+    if (range && (betAmount.value < range[0] || betAmount.value > range[1])) {
+        actionError.value = `Chaal must be between ₹${range[0]} and ₹${range[1]}.`;
+        return;
+    }
+    act('chaal', { amount: betAmount.value });
+}
+
 const myPlayer = computed(() =>
     props.hand?.players.find((p) => p.user_id === props.me.id) ?? null,
 );
@@ -87,6 +120,26 @@ const activeCount = computed(
 
 const canShow = computed(() => activeCount.value === 2 && isMyTurn.value);
 
+function nameForUser(userId: number | null | undefined): string {
+    if (!userId) return '—';
+    return props.table.table_players.find((tp) => tp.user_id === userId)?.user.name ?? '—';
+}
+
+// Human-readable result of a completed hand.
+const resultText = computed(() => {
+    const h = props.hand;
+    if (!h || h.status !== 'completed') return '';
+    if (h.winner_user_id) {
+        return `${nameForUser(h.winner_user_id)} wins ₹${h.pot_amount}`;
+    }
+    // No single winner → pot was split between the remaining players.
+    const winners = h.players.filter((p) => p.is_winner).map((p) => nameForUser(p.user_id));
+    if (winners.length > 1) {
+        return `Split pot: ${winners.join(' & ')} share ₹${h.pot_amount}`;
+    }
+    return 'Hand complete';
+});
+
 const seatedUsers = computed(() => {
     const seats: Record<number, TableInfo['table_players'][number]> = {};
     for (const tp of props.table.table_players) {
@@ -104,6 +157,7 @@ function startHand() {
 }
 
 function act(action: string, data: Record<string, unknown> = {}) {
+    actionError.value = null;
     router.post(`/table/${props.table.code}/action`, { action, ...data }, { preserveScroll: true });
 }
 
@@ -156,8 +210,11 @@ onUnmounted(() => {
                 <div class="mt-1 text-xs text-emerald-200">
                     Stake ₹{{ hand.current_stake }} • Status: {{ hand.status }}
                 </div>
-                <div v-if="hand.winner_user_id" class="mt-2 rounded bg-amber-500/30 px-3 py-1 text-sm text-amber-100">
-                    Winner: {{ table.table_players.find((tp) => tp.user_id === hand!.winner_user_id)?.user.name ?? '—' }}
+                <div v-if="hand.status === 'completed'" class="mt-3 flex flex-col items-center gap-1">
+                    <div class="rounded-lg bg-amber-400/90 px-4 py-2 text-center text-amber-950 shadow-lg">
+                        <div class="text-xs font-semibold uppercase tracking-wider">🏆 Hand Over</div>
+                        <div class="text-lg font-bold">{{ resultText }}</div>
+                    </div>
                 </div>
             </div>
             <div v-else class="absolute inset-0 flex flex-col items-center justify-center">
@@ -235,13 +292,21 @@ onUnmounted(() => {
                 Legal chaal range: ₹{{ my_legal_range[0] }} – ₹{{ my_legal_range[1] }}
             </div>
 
+            <div
+                v-if="actionError"
+                class="mb-3 flex items-start justify-between gap-3 rounded-md border border-rose-400/50 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+            >
+                <span>{{ actionError }}</span>
+                <button type="button" class="shrink-0 font-semibold hover:opacity-70" @click="actionError = null">✕</button>
+            </div>
+
             <div class="flex flex-wrap gap-2">
                 <Button v-if="myPlayer.is_blind" variant="secondary" :disabled="!isMyTurn" @click="act('see_cards')">See Cards</Button>
                 <Button variant="destructive" :disabled="!isMyTurn" @click="act('pack')">Pack</Button>
 
                 <div class="flex items-center gap-2">
                     <Input v-model.number="betAmount" type="number" class="w-28" :min="my_legal_range?.[0]" :max="my_legal_range?.[1]" />
-                    <Button :disabled="!isMyTurn" @click="act('chaal', { amount: betAmount })">Chaal</Button>
+                    <Button :disabled="!isMyTurn" @click="chaal">Chaal</Button>
                 </div>
 
                 <Button v-if="!myPlayer.is_blind && activeCount >= 3" variant="outline" :disabled="!isMyTurn" @click="act('sideshow_request')">

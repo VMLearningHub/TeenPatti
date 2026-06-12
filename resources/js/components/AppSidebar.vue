@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, Spade, Wallet } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, FolderGit2, LayoutGrid, Spade, Table2, Users, Wallet } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -17,23 +18,45 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Lobby',
-        href: '/lobby',
-        icon: Spade,
-    },
-    {
-        title: 'Wallet',
-        href: '/wallet',
-        icon: Wallet,
-    },
-];
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
+
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Lobby',
+            href: '/lobby',
+            icon: Spade,
+        },
+        {
+            title: 'Wallet',
+            href: '/wallet',
+            icon: Wallet,
+        },
+    ];
+
+    if (isAdmin.value) {
+        items.push(
+            {
+                title: 'Users',
+                href: '/admin/users',
+                icon: Users,
+            },
+            {
+                title: 'All Tables',
+                href: '/admin/tables',
+                icon: Table2,
+            },
+        );
+    }
+
+    return items;
+});
 
 const footerNavItems: NavItem[] = [
     {
