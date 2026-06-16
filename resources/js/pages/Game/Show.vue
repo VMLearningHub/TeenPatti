@@ -248,7 +248,7 @@ onUnmounted(() => {
                         <div v-else class="text-xs text-zinc-400">Empty Seat</div>
 
                         <div v-if="seatedUsers[seat]" class="text-xs">
-                            ₹{{ seatedUsers[seat].chips_on_table }}
+                            ₹{{ seatedUsers[seat].user.wallet_balance }}
                         </div>
 
                         <!-- Cards for this seat -->

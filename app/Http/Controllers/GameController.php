@@ -45,7 +45,13 @@ class GameController extends Controller
         if ($hand) {
             $myHandPlayer = $hand->players->firstWhere('user_id', $userId);
             if ($myHandPlayer) {
-                $myHand = $myHandPlayer->cards;
+                // While playing blind the player must NOT see their own cards —
+                // they have to click "See Cards" first (which sets is_blind = false).
+                // Cards stay revealed once seen or after a showdown.
+                $reveal = ! $myHandPlayer->is_blind
+                    || $myHandPlayer->is_winner
+                    || $myHandPlayer->hand_rank !== null;
+                $myHand = $reveal ? $myHandPlayer->cards : null;
                 $myLegalRange = $this->rules->legalRange($hand, $myHandPlayer);
             }
         }
@@ -71,8 +77,10 @@ class GameController extends Controller
                         'is_winner' => $hp->is_winner,
                         'hand_rank' => $hp->hand_rank,
                         'total_contributed' => $hp->total_contributed,
-                        // Reveal cards only at showdown or for self
-                        'cards' => ($hp->user_id === $userId || $hp->is_winner || $hp->hand_rank !== null)
+                        // Reveal cards at showdown, to winners, or to yourself —
+                        // but only once you've seen them (a blind player's own
+                        // cards stay face-down until they click "See Cards").
+                        'cards' => (($hp->user_id === $userId && ! $hp->is_blind) || $hp->is_winner || $hp->hand_rank !== null)
                             ? $hp->cards
                             : null,
                     ];
