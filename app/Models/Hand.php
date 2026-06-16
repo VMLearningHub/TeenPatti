@@ -14,7 +14,12 @@ class Hand extends Model
         'pot_amount' => 'decimal:2',
         'current_stake' => 'decimal:2',
         'dealer_seat' => 'integer',
+        'previous_dealer_seat' => 'integer',
         'current_turn_seat' => 'integer',
+        'turn_started_at' => 'datetime',
+        'turn_deadline' => 'datetime',
+        'deal_order' => 'array',
+        'action_seq' => 'integer',
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
     ];

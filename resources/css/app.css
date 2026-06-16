@@ -170,3 +170,100 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* ------------------------------------------------------------------ *
+ * Teen Patti table animations
+ * ------------------------------------------------------------------ */
+
+@keyframes tp-golden-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 1);
+    }
+}
+
+@keyframes tp-winner-glow {
+    0%,
+    100% {
+        box-shadow: 0 0 8px 1px rgba(52, 211, 153, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 28px 6px rgba(52, 211, 153, 1);
+    }
+}
+
+@keyframes tp-pot-bounce {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.18);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes tp-float-up-fade {
+    0% {
+        opacity: 0;
+        transform: translateY(6px) scale(0.9);
+    }
+    15% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-34px) scale(1);
+    }
+}
+
+.tp-animate-golden-pulse {
+    animation: tp-golden-pulse 1.6s ease-in-out infinite;
+}
+
+.tp-animate-winner-glow {
+    animation: tp-winner-glow 1.2s ease-in-out infinite;
+}
+
+.tp-animate-pot-bounce {
+    animation: tp-pot-bounce 0.4s ease-out;
+}
+
+.tp-animate-float-up-fade {
+    animation: tp-float-up-fade 2s ease-out forwards;
+}
+
+/* Transient sprites rendered into the overlay layer by useFlyingChips. */
+.tp-chip {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 35% 30%, #fde68a, #f59e0b 65%, #b45309);
+    border: 2px dashed rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.tp-fly-card {
+    width: 26px;
+    height: 36px;
+    border-radius: 4px;
+    background: #9f1239;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tp-animate-golden-pulse,
+    .tp-animate-winner-glow,
+    .tp-animate-pot-bounce,
+    .tp-animate-float-up-fade,
+    .tp-card-flip * {
+        animation: none !important;
+        transition: none !important;
+    }
+}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bet;
 use App\Models\Hand;
 use App\Models\HandPlayer;
 use App\Models\PokerTable;
@@ -65,9 +66,29 @@ class GameController extends Controller
                 'current_stake' => $hand->current_stake,
                 'current_turn_seat' => $hand->current_turn_seat,
                 'dealer_seat' => $hand->dealer_seat,
+                'previous_dealer_seat' => $hand->previous_dealer_seat,
                 'sideshow_requester_id' => $hand->sideshow_requester_id,
                 'sideshow_target_id' => $hand->sideshow_target_id,
                 'winner_user_id' => $hand->winner_user_id,
+                // Real-time / animation enrichments — kept in sync with the
+                // broadcast events so polling and sockets converge.
+                'deal_order' => $hand->deal_order,
+                'action_seq' => $hand->action_seq,
+                'turn_started_at' => optional($hand->turn_started_at)->toIso8601String(),
+                'turn_deadline' => optional($hand->turn_deadline)->toIso8601String(),
+                'server_now' => now()->toIso8601String(),
+                'recent_actions' => Bet::where('hand_id', $hand->id)
+                    ->latest('id')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn (Bet $b) => [
+                        'id' => $b->id,
+                        'user_id' => $b->user_id,
+                        'action' => $b->action,
+                        'amount' => (string) $b->amount,
+                        'created_at' => optional($b->created_at)->toIso8601String(),
+                    ])
+                    ->values(),
                 'players' => $hand->players->map(function (HandPlayer $hp) use ($userId) {
                     return [
                         'user_id' => $hp->user_id,
