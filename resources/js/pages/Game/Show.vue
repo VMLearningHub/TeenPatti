@@ -300,19 +300,24 @@ onUnmounted(() => {
                 <button type="button" class="shrink-0 font-semibold hover:opacity-70" @click="actionError = null">✕</button>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-                <Button v-if="myPlayer.is_blind" variant="secondary" :disabled="!isMyTurn" @click="act('see_cards')">See Cards</Button>
-                <Button variant="destructive" :disabled="!isMyTurn" @click="act('pack')">Pack</Button>
+            <!-- Action buttons only appear on your turn; off-turn they're hidden
+                 so a disabled "See Cards"/"Chaal"/etc. can't be mistaken for usable. -->
+            <div v-if="isMyTurn" class="flex flex-wrap gap-2">
+                <Button v-if="myPlayer.is_blind" variant="secondary" @click="act('see_cards')">See Cards</Button>
+                <Button variant="destructive" @click="act('pack')">Pack</Button>
 
                 <div class="flex items-center gap-2">
                     <Input v-model.number="betAmount" type="number" class="w-28" :min="my_legal_range?.[0]" :max="my_legal_range?.[1]" />
-                    <Button :disabled="!isMyTurn" @click="chaal">Chaal</Button>
+                    <Button @click="chaal">Chaal</Button>
                 </div>
 
-                <Button v-if="!myPlayer.is_blind && activeCount >= 3" variant="outline" :disabled="!isMyTurn" @click="act('sideshow_request')">
+                <Button v-if="!myPlayer.is_blind && activeCount >= 3" variant="outline" @click="act('sideshow_request')">
                     Sideshow
                 </Button>
                 <Button v-if="canShow" variant="default" @click="act('show')">Show</Button>
+            </div>
+            <div v-else class="text-sm text-muted-foreground">
+                It's not your turn yet — actions will appear when it's your turn.
             </div>
 
             <div v-if="isSideshowTarget" class="mt-3 rounded border border-amber-400 bg-amber-50 p-3 text-sm dark:bg-amber-950/30">
